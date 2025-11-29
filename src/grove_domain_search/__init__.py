@@ -9,5 +9,16 @@ __author__ = "Autumn Brown"
 __email__ = "autumn@grove.place"
 
 from .checker import check_domain, check_domains, DomainResult
+from .pricing import get_domain_pricing, get_batch_pricing, DomainPrice, categorize_domains_by_pricing
+from .config import config
 
-__all__ = ["check_domain", "check_domains", "DomainResult"]
+__all__ = [
+    "check_domain", 
+    "check_domains", 
+    "DomainResult",
+    "get_domain_pricing",
+    "get_batch_pricing", 
+    "DomainPrice",
+    "categorize_domains_by_pricing",
+    "config"
+]

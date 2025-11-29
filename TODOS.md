@@ -7,9 +7,9 @@
 - [x] Move SPEC.md to docs/
 - [x] Fill in AGENT.md placeholders
 - [x] Update README.md with proper content
-- [ ] Add Cloudflare pricing lookup
-- [ ] Basic CLI: `grove-domain-search check example.com`
-- [ ] Create secrets.json template
+- [x] Add Cloudflare pricing lookup
+- [x] Basic CLI: `grove-domain-search check example.com`
+- [x] Create secrets.json template
 
 ## Phase 2: Durable Object & Persistence
 - [ ] Set up Cloudflare Worker with Durable Object
