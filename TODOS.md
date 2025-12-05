@@ -81,11 +81,22 @@ The website needs to show live progress as the search runs. Implementation plan:
 - Include usage stats in stream events
 - Client subscribes to SSE and updates UI in real-time
 
-### 2. Wire Up DO to Python Orchestrator
-Currently the DO has placeholder logic. Need to:
-- Make DO call the Python orchestrator (or port orchestrator to TypeScript)
-- Alternative: DO calls external API endpoint that runs Python orchestrator
-- Ensure state persistence between alarm-triggered batches
+### 2. Set Up Cloudflare Bindings & Wire Up DO
+Current state: Only the worker + Anthropic API key exist. No bindings configured.
+
+**How Durable Objects work:**
+- DO is NOT a replacement for Worker - it's accessed THROUGH a Worker
+- Worker = stateless request handler (the entry point)
+- DO = stateful singleton with SQLite storage (persists between requests)
+- Flow: Request → Worker → DO (via binding) → DO handles stateful logic
+
+**Setup needed:**
+- The DO binding is defined in wrangler.toml but may need verification
+- DO class `SearchJobDO` handles job state and alarm-based batch processing
+- Worker routes requests to DO instances (one DO per job_id)
+- DO can make HTTP calls to external services (like Anthropic API directly in TypeScript)
+
+**Decision needed:** Port orchestrator to TypeScript in DO, or have DO call Python API?
 
 ### 3. Test Full End-to-End Flow
 - Submit quiz via API
