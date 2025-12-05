@@ -1,5 +1,5 @@
-# Worker configuration for grove-domain-search
-name = "grove-domain-search"
+# Worker configuration for grove-domain-tool
+name = "grove-domain-tool"
 main = "src/index.ts"
 compatibility_date = "2024-11-01"
 
@@ -21,10 +21,20 @@ TARGET_RESULTS = "25"
 
 # Development environment
 [env.dev]
-name = "grove-domain-search-dev"
+name = "grove-domain-tool-dev"
+
+[[env.dev.durable_objects.bindings]]
+name = "SEARCH_JOB"
+class_name = "SearchJobDO"
+
+[[env.dev.migrations]]
+tag = "v1"
+new_sqlite_classes = ["SearchJobDO"]
+
 [env.dev.vars]
 ENVIRONMENT = "development"
 MAX_BATCHES = "2"
+TARGET_RESULTS = "25"
 
 # Secrets to configure:
 # - ANTHROPIC_API_KEY: API key for Claude

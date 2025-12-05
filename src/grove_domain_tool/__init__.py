@@ -1,5 +1,5 @@
 """
-grove-domain-search: AI-powered asynchronous domain availability checker.
+grove-domain-tool: AI-powered asynchronous domain availability checker.
 
 Reduces domain hunting from weeks to hours using AI agents and RDAP checking.
 """

@@ -1,5 +1,5 @@
 """
-AI model providers for grove-domain-search
+AI model providers for grove-domain-tool
 
 Supports multiple AI providers with a common interface.
 Currently: Claude (Anthropic), Kimi (Moonshot)

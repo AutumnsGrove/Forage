@@ -5,9 +5,9 @@ Tests for AI agents (driver and swarm).
 import pytest
 import json
 
-from grove_domain_search.agents.driver import DriverAgent, DomainCandidate, PreviousResults
-from grove_domain_search.agents.swarm import SwarmAgent, DomainEvaluation
-from grove_domain_search.providers.mock import MockProvider
+from grove_domain_tool.agents.driver import DriverAgent, DomainCandidate, PreviousResults
+from grove_domain_tool.agents.swarm import SwarmAgent, DomainEvaluation
+from grove_domain_tool.providers.mock import MockProvider
 
 
 class TestDomainCandidate:

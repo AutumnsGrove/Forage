@@ -4,7 +4,7 @@ Tests for quiz schema and follow-up generation.
 
 import pytest
 
-from grove_domain_search.quiz.schema import (
+from grove_domain_tool.quiz.schema import (
     QuizQuestion,
     QuizOption,
     QuizResponse,
@@ -15,8 +15,8 @@ from grove_domain_search.quiz.schema import (
     validate_initial_responses,
     get_initial_quiz_dict,
 )
-from grove_domain_search.quiz.followup import FollowupQuizGenerator
-from grove_domain_search.providers.mock import MockProvider
+from grove_domain_tool.quiz.followup import FollowupQuizGenerator
+from grove_domain_tool.providers.mock import MockProvider
 
 
 class TestQuizOption:

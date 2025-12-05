@@ -54,10 +54,10 @@ npx wrangler deploy --env dev
 
 ```bash
 # Health check
-curl https://grove-domain-search-dev.<your-subdomain>.workers.dev/health
+curl https://grove-domain-tool-dev.<your-subdomain>.workers.dev/health
 
 # Start a search (example)
-curl -X POST https://grove-domain-search-dev.<your-subdomain>.workers.dev/api/search \
+curl -X POST https://grove-domain-tool-dev.<your-subdomain>.workers.dev/api/search \
   -H "Content-Type: application/json" \
   -d '{
     "client_id": "test-client",
@@ -137,7 +137,7 @@ npx wrangler deploy --env dev
 
 echo ""
 echo "Development deployment complete!"
-echo "Test with: curl https://grove-domain-search-dev.<subdomain>.workers.dev/health"
+echo "Test with: curl https://grove-domain-tool-dev.<subdomain>.workers.dev/health"
 echo ""
 echo "When ready for production, run: npx wrangler deploy"
 ```

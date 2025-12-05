@@ -1,3 +1,3 @@
 """
-Tests for grove-domain-search package.
+Tests for grove-domain-tool package.
 """

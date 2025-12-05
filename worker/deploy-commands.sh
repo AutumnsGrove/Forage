@@ -1,5 +1,5 @@
 #!/bin/bash
-# Grove Domain Search - Cloudflare Worker Deployment Commands
+# Grove Domain Tool - Cloudflare Worker Deployment Commands
 #
 # Run these commands from the worker/ directory after logging in with `wrangler login`
 #
@@ -15,7 +15,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 echo "========================================"
-echo "Grove Domain Search - Worker Deployment"
+echo "Grove Domain Tool - Worker Deployment"
 echo "========================================"
 echo ""
 
@@ -55,10 +55,10 @@ echo ""
 echo "Step 5: Testing deployment..."
 WORKER_URL=$(npx wrangler whoami 2>/dev/null | grep -oP 'subdomain: \K[^)]+' || echo "YOUR_SUBDOMAIN")
 echo ""
-echo "Health check URL: https://grove-domain-search-dev.${WORKER_URL}.workers.dev/health"
+echo "Health check URL: https://grove-domain-tool-dev.${WORKER_URL}.workers.dev/health"
 echo ""
 echo "Run this to test:"
-echo "  curl https://grove-domain-search-dev.${WORKER_URL}.workers.dev/health"
+echo "  curl https://grove-domain-tool-dev.${WORKER_URL}.workers.dev/health"
 
 echo ""
 echo "========================================"

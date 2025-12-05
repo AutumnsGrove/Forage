@@ -1,4 +1,4 @@
-# grove-domain-search TODOs
+# GroveDomainTool TODOs
 
 ## Phase 1: Extraction & Core - COMPLETE
 - [x] Extract domain_checker.py to standalone package
@@ -8,7 +8,7 @@
 - [x] Fill in AGENT.md placeholders
 - [x] Update README.md with proper content
 - [x] Add Cloudflare pricing lookup
-- [x] Basic CLI: `grove-domain-search check example.com`
+- [x] Basic CLI: `grove-domain-tool check example.com`
 - [x] Create secrets.json template
 
 ## Phase 2: Durable Object & Persistence - COMPLETE
@@ -26,7 +26,7 @@
 - [x] Results scoring and ranking
 - [x] Add provider abstraction for Claude/Kimi/Mock
 - [x] Create orchestrator with state management
-- [x] CLI: `grove-domain-search search "Business Name" --mock`
+- [x] CLI: `grove-domain-tool search "Business Name" --mock`
 
 ## Phase 4: MCP Server
 - [ ] Implement MCP tool definitions

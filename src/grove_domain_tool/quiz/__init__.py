@@ -1,5 +1,5 @@
 """
-Quiz system for grove-domain-search
+Quiz system for grove-domain-tool
 
 Handles initial client intake quiz and dynamic follow-up quiz generation.
 """

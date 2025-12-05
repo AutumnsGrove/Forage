@@ -5,8 +5,8 @@ Tests for AI model providers.
 import pytest
 import json
 
-from grove_domain_search.providers.base import ModelProvider, ModelResponse, ProviderError
-from grove_domain_search.providers.mock import (
+from grove_domain_tool.providers.base import ModelProvider, ModelResponse, ProviderError
+from grove_domain_tool.providers.mock import (
     MockProvider,
     generate_mock_domains,
     generate_mock_evaluation,

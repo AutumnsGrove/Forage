@@ -1,5 +1,5 @@
 """
-Command-line interface for grove-domain-search
+Command-line interface for grove-domain-tool
 
 Provides terminal-based domain checking with pricing information
 and beautiful output inspired by Charm's tools.
@@ -144,9 +144,9 @@ async def check_multiple_domains(domains: List[str], include_pricing: bool = Tru
 def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
-        prog="grove-domain-search",
+        prog="grove-domain-tool",
         description="AI-powered domain availability checker with pricing",
-        epilog="Example: grove-domain-search check example.com test.io mysite.dev"
+        epilog="Example: grove-domain-tool check example.com test.io mysite.dev"
     )
     
     subparsers = parser.add_subparsers(dest="command", help="Available commands")

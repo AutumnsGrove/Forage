@@ -66,3 +66,4 @@ wrangler.toml.bak
 *.sqlite
 *.sqlite3
 !schema.sql
+node_modules/

@@ -1,5 +1,5 @@
 """
-grove-domain-search configuration
+grove-domain-tool configuration
 
 All magic numbers, API keys, model choices, and behavior settings live here.
 Environment variables override defaults for deployment flexibility.

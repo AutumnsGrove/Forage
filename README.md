@@ -1,4 +1,4 @@
-# grove-domain-search
+# GroveDomainTool
 
 > AI-powered asynchronous domain availability checker that reduces domain hunting from weeks to hours.
 
@@ -19,10 +19,10 @@ A standalone tool that orchestrates AI agents to generate, check, and evaluate d
 uv pip install -e .
 
 # Check a single domain
-grove-domain-search check example.com
+grove-domain-tool check example.com
 
 # Check multiple domains
-grove-domain-search check domains.txt --json
+grove-domain-tool check domains.txt --json
 ```
 
 ## Architecture

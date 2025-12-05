@@ -1,5 +1,5 @@
 """
-AI agents for grove-domain-search
+AI agents for grove-domain-tool
 
 Driver agent generates domain candidates.
 Swarm agent evaluates candidates in parallel.

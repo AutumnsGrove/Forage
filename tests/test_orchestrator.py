@@ -6,16 +6,16 @@ import pytest
 import asyncio
 from unittest.mock import patch, AsyncMock
 
-from grove_domain_search.orchestrator import (
+from grove_domain_tool.orchestrator import (
     DomainSearchOrchestrator,
     SearchState,
     SearchStatus,
     DomainSearchResult,
     quick_search,
 )
-from grove_domain_search.quiz.schema import InitialQuiz
-from grove_domain_search.providers.mock import MockProvider
-from grove_domain_search.checker import DomainResult
+from grove_domain_tool.quiz.schema import InitialQuiz
+from grove_domain_tool.providers.mock import MockProvider
+from grove_domain_tool.checker import DomainResult
 
 
 def mock_check_domain(domain: str) -> DomainResult:
@@ -141,8 +141,8 @@ class TestDomainSearchOrchestrator:
         )
 
     @pytest.mark.asyncio
-    @patch('grove_domain_search.orchestrator.check_domain', side_effect=mock_check_domain)
-    @patch('grove_domain_search.orchestrator.config.rate_limit.rdap_delay_seconds', 0)
+    @patch('grove_domain_tool.orchestrator.check_domain', side_effect=mock_check_domain)
+    @patch('grove_domain_tool.orchestrator.config.rate_limit.rdap_delay_seconds', 0)
     async def test_run_single_batch(self, mock_checker, orchestrator, initial_state):
         """Test running a single batch."""
         # Simulate what run_search does - set batch_num before running
@@ -155,8 +155,8 @@ class TestDomainSearchOrchestrator:
         assert initial_state.batch_num == 1
 
     @pytest.mark.asyncio
-    @patch('grove_domain_search.orchestrator.check_domain', side_effect=mock_check_domain)
-    @patch('grove_domain_search.orchestrator.config.rate_limit.rdap_delay_seconds', 0)
+    @patch('grove_domain_tool.orchestrator.check_domain', side_effect=mock_check_domain)
+    @patch('grove_domain_tool.orchestrator.config.rate_limit.rdap_delay_seconds', 0)
     async def test_run_search_completes(self, mock_checker, orchestrator):
         """Test full search runs to completion."""
         quiz = InitialQuiz(
@@ -185,8 +185,8 @@ class TestDomainSearchOrchestrator:
             await orchestrator.run_batch(state)
 
     @pytest.mark.asyncio
-    @patch('grove_domain_search.orchestrator.check_domain', side_effect=mock_check_domain)
-    @patch('grove_domain_search.orchestrator.config.rate_limit.rdap_delay_seconds', 0)
+    @patch('grove_domain_tool.orchestrator.check_domain', side_effect=mock_check_domain)
+    @patch('grove_domain_tool.orchestrator.config.rate_limit.rdap_delay_seconds', 0)
     async def test_followup_quiz_generation(self, mock_checker, orchestrator, initial_state):
         """Test follow-up quiz generation."""
         # Run a batch first
@@ -260,8 +260,8 @@ class TestQuickSearch:
     """Tests for quick_search convenience function."""
 
     @pytest.mark.asyncio
-    @patch('grove_domain_search.orchestrator.check_domain', side_effect=mock_check_domain)
-    @patch('grove_domain_search.orchestrator.config.rate_limit.rdap_delay_seconds', 0)
+    @patch('grove_domain_tool.orchestrator.check_domain', side_effect=mock_check_domain)
+    @patch('grove_domain_tool.orchestrator.config.rate_limit.rdap_delay_seconds', 0)
     async def test_quick_search(self, mock_checker):
         """Test quick search with defaults."""
         result = await quick_search(
@@ -275,8 +275,8 @@ class TestQuickSearch:
         assert result.quiz.business_name == "QuickTest"
 
     @pytest.mark.asyncio
-    @patch('grove_domain_search.orchestrator.check_domain', side_effect=mock_check_domain)
-    @patch('grove_domain_search.orchestrator.config.rate_limit.rdap_delay_seconds', 0)
+    @patch('grove_domain_tool.orchestrator.check_domain', side_effect=mock_check_domain)
+    @patch('grove_domain_tool.orchestrator.config.rate_limit.rdap_delay_seconds', 0)
     async def test_quick_search_with_options(self, mock_checker):
         """Test quick search with custom options."""
         result = await quick_search(

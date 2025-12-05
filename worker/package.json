@@ -1,5 +1,5 @@
 {
-  "name": "grove-domain-search-worker",
+  "name": "grove-domain-tool-worker",
   "version": "0.1.0",
   "private": true,
   "scripts": {

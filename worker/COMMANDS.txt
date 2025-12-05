@@ -1,4 +1,4 @@
-# Wrangler Commands for Grove Domain Search Worker
+# Wrangler Commands for Grove Domain Tool Worker
 #
 # Run these commands from the worker/ directory
 # Make sure you're logged in first: wrangler login
@@ -70,10 +70,10 @@ npx wrangler rollback
 # ============================================
 
 # Health check (replace YOUR_SUBDOMAIN with your actual subdomain)
-curl https://grove-domain-search-dev.YOUR_SUBDOMAIN.workers.dev/health
+curl https://grove-domain-tool-dev.YOUR_SUBDOMAIN.workers.dev/health
 
 # Start a search
-curl -X POST https://grove-domain-search-dev.YOUR_SUBDOMAIN.workers.dev/api/search \
+curl -X POST https://grove-domain-tool-dev.YOUR_SUBDOMAIN.workers.dev/api/search \
   -H "Content-Type: application/json" \
   -d '{
     "client_id": "test-client",
@@ -85,7 +85,7 @@ curl -X POST https://grove-domain-search-dev.YOUR_SUBDOMAIN.workers.dev/api/sear
   }'
 
 # Check status (replace JOB_ID with actual job ID)
-curl https://grove-domain-search-dev.YOUR_SUBDOMAIN.workers.dev/api/status?job_id=JOB_ID
+curl https://grove-domain-tool-dev.YOUR_SUBDOMAIN.workers.dev/api/status?job_id=JOB_ID
 
 # Get results
-curl https://grove-domain-search-dev.YOUR_SUBDOMAIN.workers.dev/api/results?job_id=JOB_ID
+curl https://grove-domain-tool-dev.YOUR_SUBDOMAIN.workers.dev/api/results?job_id=JOB_ID

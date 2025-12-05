@@ -1,5 +1,5 @@
 /**
- * Type definitions for grove-domain-search worker
+ * Type definitions for grove-domain-tool worker
  */
 
 // ============================================================================
