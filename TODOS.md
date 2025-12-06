@@ -150,10 +150,13 @@ POST /api/search
 
 ## Next Steps
 
-### 1. Cloudflare Pricing Integration
-- Found an API to get real pricing data
-- Currently all domains show "unknown" pricing
-- Integrate pricing lookup into results
+### 1. Cloudflare Pricing Integration - COMPLETE
+- [x] Using cfdomainpricing.com third-party API (405 TLDs supported)
+- [x] Python: Updated `pricing.py` with file-based caching (24hr TTL)
+- [x] TypeScript: Created `worker/src/pricing.ts` with in-memory caching
+- [x] Integrated into Worker's `processBatch()` - pricing fetched for available domains
+- [x] Results API returns `price_cents`, `price_display`, and `pricing_category`
+- [x] Pricing summary in results (bundled/recommended/premium counts)
 
 ### 2. Email Notifications
 - Send results email when search completes

@@ -18,6 +18,7 @@ import type {
 import { generateCandidates, type DomainCandidate } from "./agents/driver";
 import { evaluateDomains, filterWorthChecking, type DomainEvaluation } from "./agents/swarm";
 import { checkDomainsParallel, type DomainCheckResult } from "./rdap";
+import { getBatchPricing, type DomainPrice } from "./pricing";
 
 export class SearchJobDO implements DurableObject {
   private state: DurableObjectState;
@@ -260,13 +261,33 @@ export class SearchJobDO implements DurableObject {
       );
     }
 
-    // Get all available domains, sorted by score
+    // Get all available domains, sorted by score then price
     const results = this.sql.exec(
       `SELECT * FROM domain_results
        WHERE status = 'available'
-       ORDER BY score DESC, price_cents ASC
+       ORDER BY score DESC, price_cents ASC NULLS LAST
        LIMIT 50`
     ).toArray() as unknown as DomainResult[];
+
+    // Format results with pricing display
+    const formattedResults = results.map(r => ({
+      ...r,
+      flags: typeof r.flags === "string" ? JSON.parse(r.flags) : r.flags,
+      evaluation_data: typeof r.evaluation_data === "string"
+        ? JSON.parse(r.evaluation_data)
+        : r.evaluation_data,
+      // Add formatted price for display
+      price_display: r.price_cents
+        ? `$${(r.price_cents / 100).toFixed(2)}/yr`
+        : "Price unknown",
+      pricing_category: r.price_cents
+        ? r.price_cents <= 3000
+          ? "bundled"
+          : r.price_cents <= 5000
+            ? "recommended"
+            : "premium"
+        : "unknown",
+    }));
 
     // Pricing summary
     const pricingSummary = this.getPricingSummary();
@@ -279,7 +300,7 @@ export class SearchJobDO implements DurableObject {
         job_id: job.id,
         status: job.status,
         batch_num: job.batch_num,
-        domains: results,
+        domains: formattedResults,
         total_checked: this.getTotalDomainsChecked(),
         pricing_summary: pricingSummary,
         usage: {
@@ -743,13 +764,27 @@ export class SearchJobDO implements DurableObject {
     const domainsToCheck = worthChecking.map(e => e.domain);
     const rdapResults = await checkDomainsParallel(domainsToCheck, 5, 500);
 
+    // Step 4: Get pricing for available domains
+    const availableDomainsList = rdapResults
+      .filter(r => r.status === "available")
+      .map(r => r.domain);
+
+    console.log(`Step 4: Getting pricing for ${availableDomainsList.length} available domains...`);
+    let pricingMap = new Map<string, DomainPrice>();
+    try {
+      pricingMap = await getBatchPricing(availableDomainsList);
+      console.log(`Got pricing for ${pricingMap.size} domains`);
+    } catch (error) {
+      console.warn("Failed to fetch pricing, continuing without:", error);
+    }
+
     // Map evaluations by domain for quick lookup
     const evalMap = new Map<string, DomainEvaluation>();
     for (const e of swarmResult.evaluations) {
       evalMap.set(e.domain.toLowerCase(), e);
     }
 
-    // Step 4: Save results
+    // Step 5: Save results
     let domainsAvailable = 0;
     let newGoodResults = 0;
 
@@ -758,12 +793,14 @@ export class SearchJobDO implements DurableObject {
       const candidate = newCandidates.find(
         c => c.domain.toLowerCase() === rdapResult.domain.toLowerCase()
       );
+      const pricing = pricingMap.get(rdapResult.domain);
 
       const domainResult: DomainResult = {
         batch_num: batchNum,
         domain: rdapResult.domain,
         tld: candidate?.tld || rdapResult.domain.split(".").pop() || "",
         status: rdapResult.status,
+        price_cents: pricing?.priceCents ?? undefined,
         score: evaluation?.score ?? 0.5,
         flags: evaluation?.flags ?? [],
         evaluation_data: {
@@ -774,6 +811,8 @@ export class SearchJobDO implements DurableObject {
           notes: evaluation?.notes,
           rdap_registrar: rdapResult.registrar,
           rdap_expiration: rdapResult.expiration,
+          pricing_category: pricing?.category,
+          renewal_cents: pricing?.renewalCents,
         },
       };
 
