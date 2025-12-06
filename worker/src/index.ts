@@ -108,6 +108,8 @@ async function handleApiRequest(
       return handleCancel(request, env, url);
     case "stream":
       return handleStream(request, env, url);
+    case "jobs":
+      return handleJobs(request, env, url);
     default:
       return new Response(
         JSON.stringify({ error: `Unknown action: ${action}` }),
@@ -354,4 +356,61 @@ async function handleStream(
     status: response.status,
     headers: newHeaders,
   });
+}
+
+/**
+ * Query multiple jobs at once
+ * POST /api/jobs
+ * Body: { job_ids: string[] }
+ * Returns status and results for each job that exists
+ */
+async function handleJobs(
+  request: Request,
+  env: Env,
+  url: URL
+): Promise<Response> {
+  if (request.method !== "POST") {
+    return new Response(
+      JSON.stringify({ error: "Method not allowed" }),
+      { status: 405, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  const body = await request.json() as { job_ids?: string[] };
+  const jobIds = body.job_ids || [];
+
+  if (!Array.isArray(jobIds) || jobIds.length === 0) {
+    return new Response(
+      JSON.stringify({ error: "job_ids array is required" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  // Limit to 50 jobs per request to prevent abuse
+  const limitedJobIds = jobIds.slice(0, 50);
+
+  // Query each DO in parallel
+  const results = await Promise.all(
+    limitedJobIds.map(async (jobId) => {
+      try {
+        const doId = env.SEARCH_JOB.idFromName(jobId);
+        const stub = env.SEARCH_JOB.get(doId);
+        const response = await stub.fetch(new Request("http://do/status"));
+
+        if (!response.ok) {
+          return { job_id: jobId, exists: false };
+        }
+
+        const status = await response.json();
+        return { job_id: jobId, exists: true, ...status };
+      } catch {
+        return { job_id: jobId, exists: false, error: "Failed to query" };
+      }
+    })
+  );
+
+  return new Response(
+    JSON.stringify({ jobs: results }),
+    { headers: { "Content-Type": "application/json" } }
+  );
 }
