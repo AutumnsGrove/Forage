@@ -14,6 +14,8 @@ export interface JobIndexEntry {
   batch_num: number;
   domains_checked: number;
   good_results: number;
+  input_tokens: number;
+  output_tokens: number;
   created_at: string;
   updated_at: string;
 }
@@ -60,6 +62,8 @@ export async function updateJobIndex(
     batch_num?: number;
     domains_checked?: number;
     good_results?: number;
+    input_tokens?: number;
+    output_tokens?: number;
   }
 ): Promise<void> {
   const fields: string[] = ["updated_at = datetime('now')"];
@@ -80,6 +84,14 @@ export async function updateJobIndex(
   if (updates.good_results !== undefined) {
     fields.push("good_results = ?");
     values.push(updates.good_results);
+  }
+  if (updates.input_tokens !== undefined) {
+    fields.push("input_tokens = ?");
+    values.push(updates.input_tokens);
+  }
+  if (updates.output_tokens !== undefined) {
+    fields.push("output_tokens = ?");
+    values.push(updates.output_tokens);
   }
 
   values.push(jobId);
@@ -166,17 +178,21 @@ export async function upsertJobIndex(
     batch_num?: number;
     domains_checked?: number;
     good_results?: number;
+    input_tokens?: number;
+    output_tokens?: number;
   }
 ): Promise<void> {
   await db
     .prepare(
-      `INSERT INTO job_index (job_id, client_id, status, business_name, batch_num, domains_checked, good_results, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+      `INSERT INTO job_index (job_id, client_id, status, business_name, batch_num, domains_checked, good_results, input_tokens, output_tokens, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
        ON CONFLICT(job_id) DO UPDATE SET
          status = excluded.status,
          batch_num = excluded.batch_num,
          domains_checked = excluded.domains_checked,
          good_results = excluded.good_results,
+         input_tokens = excluded.input_tokens,
+         output_tokens = excluded.output_tokens,
          updated_at = datetime('now')`
     )
     .bind(
@@ -186,7 +202,9 @@ export async function upsertJobIndex(
       data.business_name ?? null,
       data.batch_num ?? 0,
       data.domains_checked ?? 0,
-      data.good_results ?? 0
+      data.good_results ?? 0,
+      data.input_tokens ?? 0,
+      data.output_tokens ?? 0
     )
     .run();
 }

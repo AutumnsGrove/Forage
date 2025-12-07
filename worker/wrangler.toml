@@ -23,14 +23,20 @@ database_id = "cd493112-a901-4f6d-aadf-a5ca78929557"
 tag = "v1"
 new_sqlite_classes = ["SearchJobDO"]
 
+# Durable Objects observability (logs to CF dashboard)
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+
 # Environment variables (secrets should be set via wrangler secret)
 [vars]
 ENVIRONMENT = "production"
 MAX_BATCHES = "6"
 TARGET_RESULTS = "25"
 # Provider selection: claude, deepseek, kimi, cloudflare
-DRIVER_PROVIDER = "claude"
-SWARM_PROVIDER = "claude"
+DRIVER_PROVIDER = "deepseek"
+SWARM_PROVIDER = "deepseek"
 
 # Development environment
 [env.dev]

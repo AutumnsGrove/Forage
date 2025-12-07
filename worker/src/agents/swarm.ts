@@ -350,7 +350,7 @@ export function quickEvaluate(domain: string): DomainEvaluation {
  */
 export function filterWorthChecking(
   evaluations: DomainEvaluation[],
-  minScore = 0.4
+  minScore = 0.8
 ): DomainEvaluation[] {
   return evaluations.filter(e => e.worthChecking && e.score >= minScore);
 }

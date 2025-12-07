@@ -119,12 +119,15 @@ async function handleApiRequest(
     case "stream":
       return handleStream(request, env, url);
     case "jobs":
-      // Handle /api/jobs/list and /api/jobs/recent
+      // Handle /api/jobs/list, /api/jobs/recent, /api/jobs/refresh
       if (pathParts[1] === "list") {
         return handleJobsList(request, env, url);
       }
       if (pathParts[1] === "recent") {
         return handleRecentJobs(request, env, url);
+      }
+      if (pathParts[1] === "refresh") {
+        return handleJobsRefresh(request, env, url);
       }
       return handleJobs(request, env, url);
     case "backfill":
@@ -249,12 +252,16 @@ async function handleStatus(
         batch_num?: number;
         domains_checked?: number;
         good_results?: number;
+        input_tokens?: number;
+        output_tokens?: number;
       };
       await updateJobIndex(env.DB, jobId, {
         status: status.status,
         batch_num: status.batch_num,
         domains_checked: status.domains_checked,
         good_results: status.good_results,
+        input_tokens: status.input_tokens,
+        output_tokens: status.output_tokens,
       });
     } catch (err) {
       console.error("Failed to sync job index:", err);
@@ -465,6 +472,98 @@ async function handleRecentJobs(
 }
 
 /**
+ * Refresh job statuses from Durable Objects
+ * GET /api/jobs/refresh?job_ids=id1,id2,... OR GET /api/jobs/refresh (refreshes all non-terminal jobs)
+ *
+ * Queries each DO in parallel for fresh status and updates the job_index.
+ * Returns the refreshed job list.
+ */
+async function handleJobsRefresh(
+  request: Request,
+  env: Env,
+  url: URL
+): Promise<Response> {
+  try {
+    // Get job IDs to refresh - either from query param or fetch non-terminal jobs
+    let jobIds: string[];
+    const jobIdsParam = url.searchParams.get("job_ids");
+
+    if (jobIdsParam) {
+      jobIds = jobIdsParam.split(",").filter(id => id.trim());
+    } else {
+      // Fetch all non-terminal jobs (pending, running)
+      const result = await listJobs(env.DB, { limit: 100 });
+      jobIds = result.jobs
+        .filter(j => j.status !== "complete" && j.status !== "failed")
+        .map(j => j.job_id);
+    }
+
+    if (jobIds.length === 0) {
+      // No jobs to refresh, return current list
+      const result = await listJobs(env.DB, { limit: 100 });
+      return new Response(JSON.stringify(result), {
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Query each DO in parallel
+    const refreshResults = await Promise.allSettled(
+      jobIds.map(async (jobId) => {
+        const doId = env.SEARCH_JOB.idFromName(jobId);
+        const stub = env.SEARCH_JOB.get(doId);
+        const response = await stub.fetch(new Request("http://do/status"));
+
+        if (!response.ok) {
+          return { jobId, success: false };
+        }
+
+        const status = (await response.json()) as {
+          status?: string;
+          batch_num?: number;
+          domains_checked?: number;
+          good_results?: number;
+          input_tokens?: number;
+          output_tokens?: number;
+        };
+
+        // Update job index with fresh data
+        await updateJobIndex(env.DB, jobId, {
+          status: status.status,
+          batch_num: status.batch_num,
+          domains_checked: status.domains_checked,
+          good_results: status.good_results,
+          input_tokens: status.input_tokens,
+          output_tokens: status.output_tokens,
+        });
+
+        return { jobId, success: true, status: status.status };
+      })
+    );
+
+    const refreshed = refreshResults.filter(
+      r => r.status === "fulfilled" && r.value.success
+    ).length;
+
+    // Return updated job list
+    const result = await listJobs(env.DB, { limit: 100 });
+    return new Response(
+      JSON.stringify({
+        ...result,
+        refreshed,
+        total_attempted: jobIds.length,
+      }),
+      { headers: { "Content-Type": "application/json" } }
+    );
+  } catch (err) {
+    console.error("Failed to refresh jobs:", err);
+    return new Response(
+      JSON.stringify({ error: "Failed to refresh jobs" }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+}
+
+/**
  * Query multiple jobs at once
  * POST /api/jobs
  * Body: { job_ids: string[] }
@@ -585,6 +684,8 @@ async function handleBackfill(
         batch_num?: number;
         domains_checked?: number;
         good_results?: number;
+        input_tokens?: number;
+        output_tokens?: number;
       };
 
       // Upsert into job_index
@@ -595,6 +696,8 @@ async function handleBackfill(
         batch_num: status.batch_num,
         domains_checked: status.domains_checked,
         good_results: status.good_results,
+        input_tokens: status.input_tokens,
+        output_tokens: status.output_tokens,
       });
 
       success++;

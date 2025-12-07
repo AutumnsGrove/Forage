@@ -247,6 +247,7 @@ export class SearchJobDO implements DurableObject {
     const domainsChecked = this.getTotalDomainsChecked();
     const goodResults = this.getGoodResultsCount();
     const availableDomains = this.getAvailableDomainsCount();
+    const tokens = this.getTokenUsage();
 
     return new Response(
       JSON.stringify({
@@ -256,6 +257,8 @@ export class SearchJobDO implements DurableObject {
         domains_checked: domainsChecked,
         domains_available: availableDomains,
         good_results: goodResults,
+        input_tokens: tokens.input,
+        output_tokens: tokens.output,
         created_at: job.created_at,
         updated_at: job.updated_at,
       }),
@@ -578,7 +581,7 @@ export class SearchJobDO implements DurableObject {
   private getGoodResultsCount(): number {
     const result = this.sql.exec<{ count: number }>(
       `SELECT COUNT(*) as count FROM domain_results
-       WHERE status = 'available' AND score >= 0.4`
+       WHERE status = 'available' AND score >= 0.8`
     ).toArray();
     return result[0]?.count ?? 0;
   }
@@ -678,8 +681,8 @@ export class SearchJobDO implements DurableObject {
     const startTime = Date.now();
 
     // Create providers based on job-level settings (from API) or env defaults
-    const driverProviderName = (job.driver_provider || this.env.DRIVER_PROVIDER || "claude") as ProviderName;
-    const swarmProviderName = (job.swarm_provider || this.env.SWARM_PROVIDER || "claude") as ProviderName;
+    const driverProviderName = (job.driver_provider || this.env.DRIVER_PROVIDER || "deepseek") as ProviderName;
+    const swarmProviderName = (job.swarm_provider || this.env.SWARM_PROVIDER || "deepseek") as ProviderName;
 
     const driverProvider = getProvider(driverProviderName, this.env);
     const swarmProvider = getProvider(swarmProviderName, this.env);
