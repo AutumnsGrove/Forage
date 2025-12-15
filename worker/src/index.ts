@@ -5,7 +5,7 @@
  * Exposes MCP-style tool endpoints for domain search operations.
  */
 
-import type { Env } from "./types";
+import type { Env, InitialQuizResponse } from "./types";
 import { SearchJobDO } from "./durable-object";
 import {
   createJobIndex,
@@ -14,6 +14,8 @@ import {
   getRecentJobs,
   upsertJobIndex,
 } from "./job-index";
+import { getProvider, type ProviderName } from "./providers";
+import { VIBE_PARSE_SYSTEM_PROMPT, formatVibeParsePrompt } from "./prompts";
 
 // Re-export Durable Object class
 export { SearchJobDO };
@@ -106,6 +108,8 @@ async function handleApiRequest(
   switch (action) {
     case "search":
       return handleSearch(request, env, url);
+    case "vibe":
+      return handleVibeSearch(request, env, url);
     case "status":
       return handleStatus(request, env, url);
     case "results":
@@ -220,6 +224,185 @@ async function handleSearch(
   });
 
   return stub.fetch(doRequest);
+}
+
+/**
+ * Start a vibe-based domain search (simplified interface)
+ * POST /api/vibe
+ * Body: { vibe_text: string, client_id?: string, client_email?: string }
+ *
+ * Parses freeform text to extract search parameters using AI.
+ * Minimum 5 words required.
+ */
+async function handleVibeSearch(
+  request: Request,
+  env: Env,
+  url: URL
+): Promise<Response> {
+  if (request.method !== "POST") {
+    return new Response(
+      JSON.stringify({ error: "Method not allowed" }),
+      { status: 405, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  const body = await request.json() as {
+    vibe_text: string;
+    client_id?: string;
+    client_email?: string;
+    driver_provider?: string;
+    swarm_provider?: string;
+  };
+
+  if (!body.vibe_text) {
+    return new Response(
+      JSON.stringify({ error: "Missing vibe_text" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  // Validate minimum 5 words
+  const wordCount = body.vibe_text.trim().split(/\s+/).length;
+  if (wordCount < 5) {
+    return new Response(
+      JSON.stringify({
+        error: "vibe_text must be at least 5 words",
+        word_count: wordCount,
+        hint: "Tell us more about your business, project, or the vibe you're going for",
+      }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  // Validate provider names if provided
+  const validProviders = ["claude", "deepseek", "kimi", "cloudflare"];
+  if (body.driver_provider && !validProviders.includes(body.driver_provider)) {
+    return new Response(
+      JSON.stringify({ error: `Invalid driver_provider. Valid options: ${validProviders.join(", ")}` }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+  if (body.swarm_provider && !validProviders.includes(body.swarm_provider)) {
+    return new Response(
+      JSON.stringify({ error: `Invalid swarm_provider. Valid options: ${validProviders.join(", ")}` }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  // Use AI to parse the vibe text into structured parameters
+  // Default to deepseek for parsing (fast and cheap)
+  const parseProvider = getProvider(
+    (env.DRIVER_PROVIDER as ProviderName) || "deepseek",
+    env
+  );
+
+  let parsedParams: {
+    business_name: string;
+    domain_idea?: string;
+    vibe: string;
+    keywords?: string;
+    tld_preferences: string[];
+  };
+
+  try {
+    const parseResponse = await parseProvider.generate({
+      system: VIBE_PARSE_SYSTEM_PROMPT,
+      prompt: formatVibeParsePrompt(body.vibe_text),
+      maxTokens: 500,
+      temperature: 0.3,
+    });
+
+    // Parse the JSON response
+    const content = parseResponse.content.trim();
+    // Handle potential markdown code blocks
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error("No JSON object found in response");
+    }
+    parsedParams = JSON.parse(jsonMatch[0]);
+
+    // Validate required fields
+    if (!parsedParams.business_name) {
+      parsedParams.business_name = "My Project";
+    }
+    if (!parsedParams.vibe) {
+      parsedParams.vibe = "professional";
+    }
+    if (!parsedParams.tld_preferences || !Array.isArray(parsedParams.tld_preferences)) {
+      parsedParams.tld_preferences = ["any"];
+    }
+  } catch (err) {
+    console.error("Failed to parse vibe text:", err);
+    return new Response(
+      JSON.stringify({
+        error: "Failed to parse vibe text",
+        details: String(err),
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  // Build quiz responses from parsed parameters
+  const quizResponses: InitialQuizResponse = {
+    business_name: parsedParams.business_name,
+    domain_idea: parsedParams.domain_idea,
+    tld_preferences: parsedParams.tld_preferences,
+    vibe: parsedParams.vibe,
+    keywords: parsedParams.keywords,
+    diverse_tlds: true, // Default to diverse for vibe searches
+    client_email: body.client_email,
+  };
+
+  // Generate client_id if not provided
+  const clientId = body.client_id || `vibe-${crypto.randomUUID().slice(0, 8)}`;
+
+  // Generate job ID
+  const jobId = crypto.randomUUID();
+
+  // Write to job index first
+  try {
+    await createJobIndex(env.DB, jobId, clientId, parsedParams.business_name);
+  } catch (err) {
+    console.error("Failed to create job index:", err);
+  }
+
+  // Get Durable Object stub
+  const doId = env.SEARCH_JOB.idFromName(jobId);
+  const stub = env.SEARCH_JOB.get(doId);
+
+  // Forward request to DO
+  const doRequest = new Request("http://do/start", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      job_id: jobId,
+      client_id: clientId,
+      quiz_responses: quizResponses,
+      driver_provider: body.driver_provider,
+      swarm_provider: body.swarm_provider,
+    }),
+  });
+
+  const doResponse = await stub.fetch(doRequest);
+  const doResult = await doResponse.json();
+
+  // Return enriched response with parsed parameters for transparency
+  return new Response(
+    JSON.stringify({
+      ...doResult as object,
+      parsed: {
+        business_name: parsedParams.business_name,
+        vibe: parsedParams.vibe,
+        keywords: parsedParams.keywords,
+        tld_preferences: parsedParams.tld_preferences,
+        domain_idea: parsedParams.domain_idea,
+      },
+    }),
+    {
+      status: doResponse.status,
+      headers: { "Content-Type": "application/json" },
+    }
+  );
 }
 
 /**

@@ -125,6 +125,14 @@ export interface StartSearchRequest {
   swarm_provider?: string; // claude | deepseek | kimi | cloudflare
 }
 
+export interface VibeSearchRequest {
+  vibe_text: string; // Minimum 5 words describing what they're looking for
+  client_id?: string; // Optional, will be auto-generated if not provided
+  client_email?: string; // Optional email for notifications
+  driver_provider?: string; // claude | deepseek | kimi | cloudflare
+  swarm_provider?: string; // claude | deepseek | kimi | cloudflare
+}
+
 export interface StartSearchResponse {
   job_id: string;
   status: SearchStatus;

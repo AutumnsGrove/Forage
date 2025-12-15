@@ -119,6 +119,52 @@ const BATCH_GUIDELINES: Record<number, string> = {
 };
 
 // =============================================================================
+// VIBE PARSING PROMPTS
+// =============================================================================
+
+export const VIBE_PARSE_SYSTEM_PROMPT = `You are an expert at understanding what people want for their domain names and online presence.
+
+Your job is to take a freeform description and extract structured information for a domain search.
+
+Be creative in interpreting the user's intent:
+- If they describe a business, infer the business name
+- If they describe a feeling or aesthetic, capture that as the vibe
+- Extract any keywords that could help generate domain ideas
+- Make smart defaults for anything not explicitly stated
+
+Always output valid JSON matching the required schema.`;
+
+export const VIBE_PARSE_PROMPT = `Parse this description into structured domain search parameters:
+
+"{vibe_text}"
+
+Extract the following information and output as JSON:
+
+{
+  "business_name": "The inferred business/project name (required - make your best guess)",
+  "domain_idea": "Any specific domain they mentioned wanting, or null",
+  "vibe": "The brand feeling/aesthetic: professional, creative, minimal, bold, playful, technical, friendly, elegant, modern, or a combination",
+  "keywords": "Comma-separated relevant keywords extracted from their description",
+  "tld_preferences": ["array of preferred TLDs like com, io, co, or 'any' if not specified"]
+}
+
+Guidelines:
+- business_name: Look for proper nouns, project names, or descriptive phrases. If unclear, create a concise name from key concepts.
+- vibe: Infer the tone from adjectives, industry, and overall description. Default to "professional" if unclear.
+- keywords: Extract 3-5 key themes, concepts, or descriptive words.
+- tld_preferences: Only include specific TLDs if mentioned. Default to ["any"] for flexibility.
+- domain_idea: Only include if they explicitly mentioned a specific domain they want.
+
+Output ONLY the JSON object, no markdown or explanation.`;
+
+/**
+ * Format the vibe parsing prompt
+ */
+export function formatVibeParsePrompt(vibeText: string): string {
+  return VIBE_PARSE_PROMPT.replace("{vibe_text}", vibeText);
+}
+
+// =============================================================================
 // SWARM EVALUATION PROMPTS
 // =============================================================================
 
