@@ -5,8 +5,8 @@ Tests for AI model providers.
 import pytest
 import json
 
-from grove_domain_tool.providers.base import ModelProvider, ModelResponse, ProviderError
-from grove_domain_tool.providers.mock import (
+from forage.providers.base import ModelProvider, ModelResponse, ProviderError
+from forage.providers.mock import (
     MockProvider,
     generate_mock_domains,
     generate_mock_evaluation,

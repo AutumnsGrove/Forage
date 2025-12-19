@@ -1,12 +1,12 @@
-# GroveDomainTool
+# Forage
 
-> AI-powered domain discovery that reduces domain hunting from weeks to hours.
+> Before you can plant, you have to search. Domain discovery that reduces domain hunting from weeks to hours.
 
 ## Overview
 
 An autonomous tool that orchestrates AI agents to generate, evaluate, and check domain name availability. Runs in the background via Cloudflare Durable Objects, producing a curated list of 25+ available, affordable domain options.
 
-**Live:** [domains.grove.place](https://domains.grove.place)
+**Live:** [forage.grove.place](https://forage.grove.place)
 
 ## Features
 
@@ -35,17 +35,17 @@ An autonomous tool that orchestrates AI agents to generate, evaluate, and check 
 uv pip install -e .
 
 # Check a single domain
-grove-domain-tool check example.com
+forage check example.com
 
 # Run a full search
-grove-domain-tool search "Sunrise Bakery" --batches 2 --vibe creative
+forage search "Sunrise Bakery" --batches 2 --vibe creative
 ```
 
 ### API Usage
 
 ```bash
 # Start a search
-curl -X POST https://grove-domain-tool.m7jv4v7npb.workers.dev/api/search \
+curl -X POST https://forage.grove.place/api/search \
   -H "Content-Type: application/json" \
   -d '{
     "client_id": "test-123",
@@ -59,10 +59,10 @@ curl -X POST https://grove-domain-tool.m7jv4v7npb.workers.dev/api/search \
   }'
 
 # Check status
-curl https://grove-domain-tool.m7jv4v7npb.workers.dev/api/status?job_id=JOB_ID
+curl https://forage.grove.place/api/status?job_id=JOB_ID
 
 # Get results
-curl https://grove-domain-tool.m7jv4v7npb.workers.dev/api/results?job_id=JOB_ID
+curl https://forage.grove.place/api/results?job_id=JOB_ID
 ```
 
 ## API Endpoints

@@ -78,7 +78,7 @@ async function fetchPricingData(): Promise<Map<string, TldPricingData>> {
   const response = await fetch(PRICING_API_URL, {
     headers: {
       Accept: "application/json",
-      "User-Agent": "GroveDomainTool/1.0",
+      "User-Agent": "Forage/1.0",
     },
   });
 

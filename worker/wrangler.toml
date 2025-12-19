@@ -1,5 +1,5 @@
-# Worker configuration for grove-domain-tool
-name = "grove-domain-tool"
+# Worker configuration for Forage
+name = "forage"
 main = "src/index.ts"
 compatibility_date = "2024-11-01"
 
@@ -15,7 +15,7 @@ binding = "AI"
 # D1 Database binding for job index
 [[d1_databases]]
 binding = "DB"
-database_name = "grove-domain-jobs"
+database_name = "forage-jobs"
 database_id = "cd493112-a901-4f6d-aadf-a5ca78929557"
 
 # Migrations for Durable Objects
@@ -40,7 +40,7 @@ SWARM_PROVIDER = "deepseek"
 
 # Development environment
 [env.dev]
-name = "grove-domain-tool-dev"
+name = "forage-dev"
 
 [[env.dev.durable_objects.bindings]]
 name = "SEARCH_JOB"

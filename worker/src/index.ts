@@ -1,5 +1,5 @@
 /**
- * grove-domain-tool Worker Entry Point
+ * Forage Worker Entry Point
  *
  * Handles incoming requests and routes them to the appropriate Durable Object.
  * Exposes MCP-style tool endpoints for domain search operations.
@@ -43,7 +43,7 @@ export default {
         return new Response(
           JSON.stringify({
             status: "ok",
-            service: "grove-domain-tool",
+            service: "forage",
             version: "0.1.0",
             environment: env.ENVIRONMENT,
           }),

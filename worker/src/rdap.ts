@@ -12,7 +12,7 @@ const IANA_RDAP_BOOTSTRAP = "https://data.iana.org/rdap/dns.json";
 const TIMEOUT = 10000;
 
 // User agent for requests
-const USER_AGENT = "GroveDomainTool/1.0 (domain availability checker)";
+const USER_AGENT = "Forage/1.0 (domain availability checker)";
 
 // Cache for RDAP bootstrap data
 let rdapBootstrapCache: Map<string, string> | null = null;

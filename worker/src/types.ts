@@ -1,5 +1,5 @@
 /**
- * Type definitions for grove-domain-tool worker
+ * Type definitions for Forage worker
  */
 
 // ============================================================================

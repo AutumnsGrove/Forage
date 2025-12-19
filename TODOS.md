@@ -1,4 +1,4 @@
-# GroveDomainTool TODOs
+# Forage TODOs
 
 ## Phase 1: Extraction & Core - COMPLETE
 - [x] Extract domain_checker.py to standalone package
@@ -8,7 +8,7 @@
 - [x] Fill in AGENT.md placeholders
 - [x] Update README.md with proper content
 - [x] Add Cloudflare pricing lookup
-- [x] Basic CLI: `grove-domain-tool check example.com`
+- [x] Basic CLI: `forage check example.com`
 - [x] Create secrets.json template
 
 ## Phase 2: Durable Object & Persistence - COMPLETE
@@ -28,7 +28,7 @@
 - [x] Results scoring and ranking
 - [x] Add provider abstraction for Claude/Kimi/Mock
 - [x] Create orchestrator with state management
-- [x] CLI: `grove-domain-tool search "Business Name" --mock`
+- [x] CLI: `forage search "Business Name" --mock`
 - [x] CLI: Real AI search with Claude API (tested & working)
 - [x] Fix terminal output to show domains with unknown pricing
 - [x] Fix prompts to generate business-themed domains (not generic)
@@ -108,7 +108,7 @@ First production search for "Sunrise Bakery":
 
 ## API Endpoints (Production)
 
-Base URL: `https://grove-domain-tool.m7jv4v7npb.workers.dev`
+Base URL: `https://forage.grove.place`
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -246,7 +246,7 @@ Added support for 4 AI providers with proper tool/function calling:
 - Follow-up quiz UI works correctly on history detail page (`/admin/history/[job_id]`)
 
 **Deployment:**
-- Worker deployed to `https://grove-domain-tool.m7jv4v7npb.workers.dev` (health endpoint verified)
+- Worker deployed to `https://forage.grove.place` (health endpoint verified)
 - Frontend deployed to Cloudflare Pages at `https://4086e2c8.grove-domains.pages.dev`
 - Both deployments successful and fully synchronized
 
@@ -288,6 +288,6 @@ All core features are implemented, tested, and deployed:
 
 *Last updated: 2025-12-07 (final synchronization)*
 *73 tests passing (Python)*
-*Worker: https://grove-domain-tool.m7jv4v7npb.workers.dev*
-*Frontend: https://4086e2c8.grove-domains.pages.dev*
-*CLI: `grove-domain-tool search "Business Name" --batches 2`*
+*Worker: https://forage.grove.place*
+*Frontend: https://forage.grove.place*
+*CLI: `forage search "Business Name" --batches 2`*

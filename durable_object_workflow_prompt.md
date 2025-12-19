@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes a Cloudflare Workers-based architecture for orchestrating multi-step AI agent workflows using Durable Objects (DO) with SQLite persistence and Alarm API for chained execution. The pattern is designed for long-running, stateful tasks that involve multiple asynchronous steps (e.g., generating candidates, evaluating them, checking external APIs, and iterating until a goal is met). It's used in the GroveDomainTool to search for available domain names, but can be adapted to any similar workflow (product search, content generation, data analysis, etc.).
+This document describes a Cloudflare Workers-based architecture for orchestrating multi-step AI agent workflows using Durable Objects (DO) with SQLite persistence and Alarm API for chained execution. The pattern is designed for long-running, stateful tasks that involve multiple asynchronous steps (e.g., generating candidates, evaluating them, checking external APIs, and iterating until a goal is met). It's used in Forage to search for available domain names, but can be adapted to any similar workflow (product search, content generation, data analysis, etc.).
 
 ## Core Architecture
 
@@ -265,4 +265,4 @@ wrangler secret put DEEPSEEK_API_KEY
 
 This Durable Object‑based orchestration pattern is a powerful, production‑ready foundation for any multi‑step AI agent workflow that requires stateful, long‑running execution. By separating concerns (DO for state, Alarm for scheduling, D1 for indexing) and using SQLite for persistence, you get a robust system that is both simple to understand and easy to extend.
 
-For a complete reference, examine the GroveDomainTool source code (especially `worker/src/durable-object.ts` and `worker/src/index.ts`). Adapt the patterns to your specific domain, and you'll have a scalable background job system running on Cloudflare's global network.
+For a complete reference, examine the Forage source code (especially `worker/src/durable-object.ts` and `worker/src/index.ts`). Adapt the patterns to your specific domain, and you'll have a scalable background job system running on Cloudflare's global network.

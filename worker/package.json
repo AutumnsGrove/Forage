@@ -1,5 +1,5 @@
 {
-  "name": "grove-domain-tool-worker",
+  "name": "forage-worker",
   "version": "0.1.0",
   "private": true,
   "scripts": {

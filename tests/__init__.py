@@ -1,3 +1,3 @@
 """
-Tests for grove-domain-tool package.
+Tests for Forage package.
 """
