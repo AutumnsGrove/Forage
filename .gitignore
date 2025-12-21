@@ -60,6 +60,7 @@ logs/
 # Cloudflare
 .wrangler/
 wrangler.toml.bak
+.dev.vars
 
 # Pricing cache
 .cloudflare_pricing_cache.json
