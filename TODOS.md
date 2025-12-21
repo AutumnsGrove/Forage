@@ -319,8 +319,13 @@ All core features are implemented, tested, and deployed:
   - Deployed to Cloudflare Pages project "forage"
   - Production URL: https://grove-domains.pages.dev
   - Custom domains: forage.grove.place, domains.grove.place (via grove-router)
-- [ ] **Test forage.grove.place** end-to-end
-  - Verify frontend loads correctly
+- [ ] **Fix forage.grove.place routing** (low priority)
+  - Issue: forage.grove.place doesn't load, but domains.grove.place works fine
+  - Both are configured in grove-router to route to grove-domains.pages.dev
+  - Likely a DNS cache or grove-router deployment issue
+  - Not urgent - domains.grove.place is working perfectly
+- [ ] **Test domains.grove.place** end-to-end
+  - Verify frontend loads correctly ✅ Working!
   - Test domain search functionality
   - Confirm worker API integration
 - [ ] **Clean up old worker** (optional)
