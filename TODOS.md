@@ -81,6 +81,45 @@
 
 ---
 
+## Phase 7: Performance & Provider Optimization (Future)
+
+### AI Provider Cleanup
+- [ ] **Remove unused providers**
+  - Remove Claude (too costly, not using anymore)
+  - Remove Kimi K2 (never tried, not needed)
+  - Remove Cloudflare Llama 4 Scout (never tried, not needed)
+  - **Keep only DeepSeek V3.2** as the driver (it's incredible!)
+
+### OpenRouter Migration
+- [ ] **Migrate to OpenRouter for zero data retention**
+  - Replace direct API calls with OpenRouter
+  - Zero data retention for privacy
+  - Still use DeepSeek V3.2 through OpenRouter
+  - Update API configuration in worker
+
+### Blazing Fast Task Agent (RDAP Testing)
+- [ ] **Replace task agent with Cerebras GPT-oss 20b**
+  - Cerebras is RIDICULOUSLY fast: 1000+ tokens/second
+  - Use for RDAP availability checking
+  - This will make domain searches blazing fast
+  - Research model: likely `cerebras/btlm-3b-8k-base` or similar on OpenRouter
+
+### Config Panel Improvements
+- [ ] **Simplify config UI**
+  - Remove model selector/toggle (not needed anymore)
+  - Display what we're using instead (read-only)
+  - "Driver: DeepSeek V3.2" (static display)
+  - "Task Agent: Cerebras GPT-oss 20b" (static display)
+  - Keep other config options functional (batch size, creativity, etc.)
+  - Task agent doesn't need live config - can be pre-configured
+
+### Notes
+- DeepSeek V3.2 is the winner for driver - no need to switch
+- Haven't tried Kimi or Llama 4 - DeepSeek is so good we don't need them
+- Cerebras will give us the speed boost we need for RDAP tasks
+
+---
+
 ## Completed This Session (2025-12-06)
 
 ### Major Accomplishment: TypeScript Port Complete!
