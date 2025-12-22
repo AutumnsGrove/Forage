@@ -394,3 +394,24 @@ All core features are implemented, tested, and deployed:
 - [ ] Currently using old magic code system - migrate to OAuth
 - [ ] Note: domains.grove.place (Pages UI) already has GroveAuth working
 
+## Future: Config Panel & Performance Scaling
+
+### Config Panel Fixes
+- [ ] **Fix settings not applying** - Max batches, creativity slider, etc. aren't being sent to worker
+- [ ] Verify frontend is passing config values in API requests
+- [ ] Verify worker is reading and using config values from request body
+
+### Performance Scaling (Make it FAST)
+- [ ] **Concurrent parallel swarms** - Run multiple swarm evaluations simultaneously
+- [ ] Increase parallelism in batch processing (currently maxConcurrent=12, could go higher)
+- [ ] Consider running multiple batches in parallel instead of sequential
+- [ ] Optimize RDAP checking with more concurrent requests
+- [ ] Profile and identify bottlenecks in the pipeline
+- [ ] Goal: Sub-1-minute searches for premium tier users
+
+### Notes
+- DeepSeek V3.2 via OpenRouter is blazing fast and dirt cheap ($0.007/search)
+- Current: ~2 min per search (down from 1 hour!)
+- Cerebras option still available if needed for even more speed
+- Focus on parallelism over model changes for now
+
