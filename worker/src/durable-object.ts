@@ -766,9 +766,9 @@ export class SearchJobDO implements DurableObject {
     const batchNum = this.incrementBatchNum();
     const startTime = Date.now();
 
-    // Create providers based on job-level settings (from API) or env defaults
-    const driverProviderName = (job.driver_provider || this.env.DRIVER_PROVIDER || "deepseek") as ProviderName;
-    const swarmProviderName = (job.swarm_provider || this.env.SWARM_PROVIDER || "deepseek") as ProviderName;
+    // Create providers - default to OpenRouter for ZDR compliance, with DeepSeek as fallback
+    const driverProviderName = (job.driver_provider || this.env.DRIVER_PROVIDER || "openrouter") as ProviderName;
+    const swarmProviderName = (job.swarm_provider || this.env.SWARM_PROVIDER || "openrouter") as ProviderName;
 
     const driverProvider = getProvider(driverProviderName, this.env);
     const swarmProvider = getProvider(swarmProviderName, this.env);
@@ -792,7 +792,7 @@ export class SearchJobDO implements DurableObject {
 
     console.log(`Processing batch ${batchNum} for "${quiz.business_name}"`);
 
-    // Step 1: Generate candidates via Driver agent
+    // Step 1: Generate candidates via Driver agent (OpenRouter primary, DeepSeek fallback)
     console.log(`Step 1: Generating candidates using ${driverProviderName}...`);
     const driverResult = await generateCandidates(driverProvider, {
       businessName: quiz.business_name,

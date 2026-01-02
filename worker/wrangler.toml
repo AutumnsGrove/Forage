@@ -34,7 +34,7 @@ invocation_logs = true
 ENVIRONMENT = "production"
 MAX_BATCHES = "6"
 TARGET_RESULTS = "25"
-# Provider selection: deepseek, openrouter
+# Provider selection: openrouter (primary, ZDR compliant), deepseek (fallback)
 DRIVER_PROVIDER = "openrouter"
 SWARM_PROVIDER = "openrouter"
 # RDAP checker selection: rdap (traditional), cerebras (AI-powered)
@@ -64,12 +64,12 @@ SWARM_PROVIDER = "openrouter"
 USE_CEREBRAS_RDAP = "false"
 
 # Secrets to configure:
-# - OPENROUTER_API_KEY: API key for OpenRouter (required if using openrouter provider)
-# - DEEPSEEK_API_KEY: API key for DeepSeek (required if using deepseek provider)
+# - OPENROUTER_API_KEY: API key for OpenRouter (primary, ZDR compliant)
+# - DEEPSEEK_API_KEY: API key for DeepSeek (fallback only)
 # - RESEND_API_KEY: API key for email sending
 #
 # Set with: wrangler secret put OPENROUTER_API_KEY
 #
-# Provider options:
-# - deepseek: DeepSeek V3.2 ($0.28/$0.42 per M tokens)
-# - openrouter: OpenRouter proxy to DeepSeek/Cerebras ($0.28/$0.42 per M tokens)
+# Provider hierarchy:
+# - openrouter: OpenRouter proxy to DeepSeek V3.2 ($0.28/$0.42 per M tokens) - PRIMARY
+# - deepseek: DeepSeek V3.2 direct ($0.28/$0.42 per M tokens) - FALLBACK

@@ -45,10 +45,11 @@ export function getProvider(
 
 /**
  * Default models per provider
+ * OpenRouter is primary (ZDR compliant), DeepSeek is fallback
  */
 export const PROVIDER_DEFAULTS: Record<ProviderName, string> = {
-  deepseek: "deepseek-chat",
-  openrouter: "deepseek/deepseek-chat",
+  deepseek: "deepseek-chat", // Fallback only
+  openrouter: "deepseek/deepseek-v3.2", // Primary - ZDR compliant
 };
 
 /**

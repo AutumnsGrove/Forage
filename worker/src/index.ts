@@ -164,28 +164,11 @@ async function handleSearch(
   const body = await request.json() as {
     client_id: string;
     quiz_responses: Record<string, unknown>;
-    driver_provider?: string;
-    swarm_provider?: string;
   };
 
   if (!body.client_id || !body.quiz_responses) {
     return new Response(
       JSON.stringify({ error: "Missing client_id or quiz_responses" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
-  // Validate provider names if provided
-  const validProviders = ["deepseek", "openrouter"];
-  if (body.driver_provider && !validProviders.includes(body.driver_provider)) {
-    return new Response(
-      JSON.stringify({ error: `Invalid driver_provider. Valid options: ${validProviders.join(", ")}` }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
-  }
-  if (body.swarm_provider && !validProviders.includes(body.swarm_provider)) {
-    return new Response(
-      JSON.stringify({ error: `Invalid swarm_provider. Valid options: ${validProviders.join(", ")}` }),
       { status: 400, headers: { "Content-Type": "application/json" } }
     );
   }
@@ -210,7 +193,7 @@ async function handleSearch(
   const doId = env.SEARCH_JOB.idFromName(jobId);
   const stub = env.SEARCH_JOB.get(doId);
 
-  // Forward request to DO with provider overrides
+  // Forward request to DO (uses default OpenRouter provider)
   const doRequest = new Request("http://do/start", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -218,8 +201,6 @@ async function handleSearch(
       job_id: jobId,
       client_id: body.client_id,
       quiz_responses: body.quiz_responses,
-      driver_provider: body.driver_provider,
-      swarm_provider: body.swarm_provider,
     }),
   });
 
@@ -250,8 +231,6 @@ async function handleVibeSearch(
     vibe_text: string;
     client_id?: string;
     client_email?: string;
-    driver_provider?: string;
-    swarm_provider?: string;
   };
 
   if (!body.vibe_text) {
@@ -274,25 +253,10 @@ async function handleVibeSearch(
     );
   }
 
-  // Validate provider names if provided
-  const validProviders = ["deepseek", "openrouter"];
-  if (body.driver_provider && !validProviders.includes(body.driver_provider)) {
-    return new Response(
-      JSON.stringify({ error: `Invalid driver_provider. Valid options: ${validProviders.join(", ")}` }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
-  }
-  if (body.swarm_provider && !validProviders.includes(body.swarm_provider)) {
-    return new Response(
-      JSON.stringify({ error: `Invalid swarm_provider. Valid options: ${validProviders.join(", ")}` }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
   // Use AI to parse the vibe text into structured parameters
-  // Default to deepseek for parsing (fast and cheap)
+  // Default to OpenRouter for ZDR compliance
   const parseProvider = getProvider(
-    (env.DRIVER_PROVIDER as ProviderName) || "deepseek",
+    (env.DRIVER_PROVIDER as ProviderName) || "openrouter",
     env
   );
 
@@ -370,7 +334,7 @@ async function handleVibeSearch(
   const doId = env.SEARCH_JOB.idFromName(jobId);
   const stub = env.SEARCH_JOB.get(doId);
 
-  // Forward request to DO
+  // Forward request to DO (uses default OpenRouter provider)
   const doRequest = new Request("http://do/start", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -378,8 +342,6 @@ async function handleVibeSearch(
       job_id: jobId,
       client_id: clientId,
       quiz_responses: quizResponses,
-      driver_provider: body.driver_provider,
-      swarm_provider: body.swarm_provider,
     }),
   });
 
