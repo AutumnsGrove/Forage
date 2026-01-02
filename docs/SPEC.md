@@ -1,8 +1,25 @@
-# Forage
+---
+aliases:
+date created: Friday, May 28th 2025, 3:01:54 pm
+date modified: Thursday, January 2nd 2026
+tags:
+  - domain-search
+  - ai-orchestration
+  - cloudflare-workers
+  - rdap
+type: tech-spec
+---
 
-> Before you can plant, you have to search. AI-powered domain discovery that reduces domain hunting from weeks to hours.
+# Forage: Domain Discovery Specification
+
+**Package:** `forage`
+**Repository:** `GroveDomainTool`
+**Type:** Python Package / MCP Server / Cloudflare Worker
+**Purpose:** AI-powered asynchronous domain availability checker that reduces domain hunting from weeks to hours
 
 ---
+
+> Before you can plant, you have to search. AI-powered domain discovery that reduces domain hunting from weeks to hours.
 
 ## Agent Instructions (Read First)
 
@@ -29,9 +46,13 @@
 
 ## Overview
 
-A standalone tool that orchestrates AI agents to generate, check, and evaluate domain name candidates for client consultations. Runs autonomously in the background, producing a curated list of ~25 available, affordable domain options.
+Forage is a standalone tool that orchestrates AI agents to generate, check, and evaluate domain name candidates for client consultations. It runs autonomously in the background, producing a curated list of ~25 available, affordable domain options.
 
 **Origin:** Extracted and productized from a successful manual workflow using Claude Code Remote + RDAP checking.
+
+### Core Philosophy
+
+Before you can plant, you have to search. Forage reduces domain hunting from weeks to hours through intelligent AI orchestration and background processing.
 
 ## Goals
 
@@ -50,52 +71,43 @@ A standalone tool that orchestrates AI agents to generate, check, and evaluate d
 
 ## Architecture
 
-**Key insight:** Durable Objects are **free** on Cloudflare (SQLite backend). Each incoming request or alarm resets the 30s CPU limit. We chain work using the Alarm API — no paid Queues needed.
+### Key Insight
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Client Intake                            │
-│  SvelteKit Frontend → 5-Question Quiz → Triggers Search         │
-│  (Terminal aesthetic, Charm-inspired UI)                        │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   Durable Object (FREE tier)                    │
-│                                                                 │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │                    SearchJob DO                           │  │
-│  │                                                           │  │
-│  │  1. Receive job → save state → set alarm(now)            │  │
-│  │  2. Alarm fires → run one batch (< 30s CPU)              │  │
-│  │  3. Save results → set alarm(+10s) for next batch        │  │
-│  │  4. Repeat until done or max batches reached             │  │
-│  │  5. Final: trigger email via Resend                      │  │
-│  │                                                           │  │
-│  └──────────────────────────────────────────────────────────┘  │
-│                              │                                  │
-│         ┌────────────────────┼────────────────────┐            │
-│         ▼                    ▼                    ▼            │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐         │
-│  │   Driver    │    │   Haiku     │    │   RDAP      │         │
-│  │   Agent     │    │   Swarm     │    │   Checker   │         │
-│  │ (Sonnet/K2) │    │ (parallel)  │    │   (core)    │         │
-│  └─────────────┘    └─────────────┘    └─────────────┘         │
-│         │                                     │                 │
-│         ▼                                     ▼                 │
-│  ┌─────────────────────────────────────────────────┐           │
-│  │            SQLite in Durable Object             │           │
-│  │     (state, results, artifacts - all local)     │           │
-│  └─────────────────────────────────────────────────┘           │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                        Output                                   │
-│  Success: 25 domains → Email via Resend → Schedule call         │
-│  Failure: Generate follow-up quiz → Email unique link           │
-│  (Emails have terminal/monospace aesthetic)                     │
-└─────────────────────────────────────────────────────────────────┘
+Durable Objects are **free** on Cloudflare (SQLite backend). Each incoming request or alarm resets the 30s CPU limit. We chain work using the Alarm API — no paid Queues needed.
+
+### System Flow
+
+```mermaid
+graph TB
+    subgraph "Client Intake"
+        FE[("SvelteKit Frontend<br/>5-Question Quiz")]
+        FE -->|triggers| SEARCH[("Search Job")]
+    end
+
+    subgraph "Durable Object (FREE tier)"
+        DO[("SearchJob DO")]
+        DO -->|alarm chain| BATCH[("Batch Processing<br/>< 30s CPU each")]
+        BATCH -->|persist| DB[(("SQLite<br/>Local State"))]
+    end
+
+    subgraph "AI Orchestration"
+        DRIVER[("Driver Agent<br/>Sonnet/K2")]
+        SWARM[("Haiku Swarm<br/>parallel")]
+        RDAP[("RDAP Checker<br/>Core")]
+    end
+
+    subgraph "Output"
+        EMAIL[("Email via Resend")]
+        QUIZ[("Follow-up Quiz")]
+    end
+
+    FE -->|job created| DO
+    DO -->|generate| DRIVER
+    DRIVER -->|evaluate| SWARM
+    SWARM -->|check| RDAP
+    RDAP -->|persist| DB
+    DB -->|results| EMAIL
+    DB -->|no results| QUIZ
 ```
 
 ### Why Durable Objects Work (Free Tier)
@@ -119,7 +131,7 @@ Each batch:
 
 ## Core Components
 
-### 1. Domain Checker (existing)
+### 1. Domain Checker (Existing)
 
 The `domain_checker.py` script — already built, battle-tested.
 
@@ -130,35 +142,26 @@ The `domain_checker.py` script — already built, battle-tested.
 - Configurable rate limiting (default 0.5s, production 10s)
 - JSON or formatted output
 
-**Minor enhancements needed:**
+**Enhancements Required:**
 - Add price lookup integration (Cloudflare API for TLDs they sell)
 - Return structured data suitable for D1 insertion
 - Add batch ID for tracking which run produced which results
 
-### 2. Orchestration Layer (new — MCP server)
+### 2. Orchestration Layer (MCP Server)
 
 The brain that coordinates everything.
 
-**MCP Tools exposed:**
+**MCP Tools Exposed:**
 
-```
-forage.start_search(client_id, quiz_responses)
-  → Kicks off autonomous search, returns job_id
+| Tool | Purpose | Returns |
+|------|---------|---------|
+| `forage.start_search()` | Kicks off autonomous search | `job_id` |
+| `forage.get_status()` | Current batch progress | `batch_num`, `domains_checked`, `candidates_found` |
+| `forage.get_results()` | Final curated list | `domains[]`, `pricing_tiers` |
+| `forage.generate_followup_quiz()` | Creates personalized quiz | `quiz_questions[]` |
+| `forage.resume_search()` | Continues with new context | `new_job_id` |
 
-forage.get_status(job_id)
-  → Returns current batch number, domains checked, candidates found
-
-forage.get_results(job_id)
-  → Returns final curated list with pricing tiers
-
-forage.generate_followup_quiz(job_id)
-  → Uses failed search data to generate personalized 3-question quiz
-
-forage.resume_search(job_id, followup_responses)
-  → Continues search with new context from follow-up quiz
-```
-
-**Internal orchestration logic:**
+**Internal Orchestration Logic:**
 
 ```python
 async def run_search(client_id: str, context: QuizResponses) -> SearchResult:
