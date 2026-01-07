@@ -5,7 +5,7 @@
  * Exposes MCP-style tool endpoints for domain search operations.
  */
 
-import type { Env, InitialQuizResponse } from "./types";
+import type { Env, InitialQuizResponse, AuthenticatedUser } from "./types";
 import { SearchJobDO } from "./durable-object";
 import {
   createJobIndex,
@@ -16,6 +16,7 @@ import {
 } from "./job-index";
 import { getProvider, type ProviderName } from "./providers";
 import { VIBE_PARSE_SYSTEM_PROMPT, formatVibeParsePrompt } from "./prompts";
+import { validateSession, unauthorizedResponse, getClientId } from "./auth";
 
 // Re-export Durable Object class
 export { SearchJobDO };
@@ -25,11 +26,12 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // CORS headers for API access
+    // CORS headers for API access - Allow credentials for Better Auth sessions
     const corsHeaders = {
-      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Origin": request.headers.get("origin") || "https://forage.grove.place",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Credentials": "true",
     };
 
     // Handle CORS preflight
@@ -91,7 +93,7 @@ export default {
 };
 
 /**
- * Handle API requests
+ * Handle API requests with authentication
  */
 async function handleApiRequest(
   request: Request,
@@ -105,37 +107,51 @@ async function handleApiRequest(
   // Handle nested paths like /api/jobs/list
   const pathParts = path.replace("/api/", "").split("/");
 
+  // Validate session for all API requests
+  const sessionData = await validateSession(request);
+
+  if (!sessionData) {
+    return unauthorizedResponse();
+  }
+
+  const user: AuthenticatedUser = {
+    id: sessionData.user.id,
+    email: sessionData.user.email,
+    name: sessionData.user.name,
+    emailVerified: sessionData.user.emailVerified,
+  };
+
   switch (action) {
     case "search":
-      return handleSearch(request, env, url);
+      return handleSearch(request, env, url, user);
     case "vibe":
-      return handleVibeSearch(request, env, url);
+      return handleVibeSearch(request, env, url, user);
     case "status":
-      return handleStatus(request, env, url);
+      return handleStatus(request, env, url, user);
     case "results":
-      return handleResults(request, env, url);
+      return handleResults(request, env, url, user);
     case "followup":
-      return handleFollowup(request, env, url);
+      return handleFollowup(request, env, url, user);
     case "resume":
-      return handleResume(request, env, url);
+      return handleResume(request, env, url, user);
     case "cancel":
-      return handleCancel(request, env, url);
+      return handleCancel(request, env, url, user);
     case "stream":
-      return handleStream(request, env, url);
+      return handleStream(request, env, url, user);
     case "jobs":
       // Handle /api/jobs/list, /api/jobs/recent, /api/jobs/refresh
       if (pathParts[1] === "list") {
-        return handleJobsList(request, env, url);
+        return handleJobsList(request, env, url, user);
       }
       if (pathParts[1] === "recent") {
-        return handleRecentJobs(request, env, url);
+        return handleRecentJobs(request, env, url, user);
       }
       if (pathParts[1] === "refresh") {
-        return handleJobsRefresh(request, env, url);
+        return handleJobsRefresh(request, env, url, user);
       }
-      return handleJobs(request, env, url);
+      return handleJobs(request, env, url, user);
     case "backfill":
-      return handleBackfill(request, env, url);
+      return handleBackfill(request, env, url, user);
     default:
       return new Response(
         JSON.stringify({ error: `Unknown action: ${action}` }),
@@ -147,12 +163,13 @@ async function handleApiRequest(
 /**
  * Start a new domain search
  * POST /api/search
- * Body: { client_id: string, quiz_responses: InitialQuizResponse }
+ * Body: { quiz_responses: InitialQuizResponse }
  */
 async function handleSearch(
   request: Request,
   env: Env,
-  url: URL
+  url: URL,
+  user: AuthenticatedUser
 ): Promise<Response> {
   if (request.method !== "POST") {
     return new Response(
@@ -162,16 +179,18 @@ async function handleSearch(
   }
 
   const body = await request.json() as {
-    client_id: string;
     quiz_responses: Record<string, unknown>;
   };
 
-  if (!body.client_id || !body.quiz_responses) {
+  if (!body.quiz_responses) {
     return new Response(
-      JSON.stringify({ error: "Missing client_id or quiz_responses" }),
+      JSON.stringify({ error: "Missing quiz_responses" }),
       { status: 400, headers: { "Content-Type": "application/json" } }
     );
   }
+
+  // Use authenticated user's email as client_id
+  const clientId = getClientId(user);
 
   // Generate job ID
   const jobId = crypto.randomUUID();
@@ -181,7 +200,7 @@ async function handleSearch(
     await createJobIndex(
       env.DB,
       jobId,
-      body.client_id,
+      clientId,
       (body.quiz_responses as { business_name?: string }).business_name
     );
   } catch (err) {
@@ -199,7 +218,7 @@ async function handleSearch(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       job_id: jobId,
-      client_id: body.client_id,
+      client_id: clientId,
       quiz_responses: body.quiz_responses,
     }),
   });
@@ -210,7 +229,7 @@ async function handleSearch(
 /**
  * Start a vibe-based domain search (simplified interface)
  * POST /api/vibe
- * Body: { vibe_text: string, client_id?: string, client_email?: string }
+ * Body: { vibe_text: string }
  *
  * Parses freeform text to extract search parameters using AI.
  * Minimum 5 words required.
@@ -218,7 +237,8 @@ async function handleSearch(
 async function handleVibeSearch(
   request: Request,
   env: Env,
-  url: URL
+  url: URL,
+  user: AuthenticatedUser
 ): Promise<Response> {
   if (request.method !== "POST") {
     return new Response(
@@ -229,8 +249,6 @@ async function handleVibeSearch(
 
   const body = await request.json() as {
     vibe_text: string;
-    client_id?: string;
-    client_email?: string;
   };
 
   if (!body.vibe_text) {
@@ -314,11 +332,11 @@ async function handleVibeSearch(
     vibe: parsedParams.vibe,
     keywords: parsedParams.keywords,
     diverse_tlds: true, // Default to diverse for vibe searches
-    client_email: body.client_email,
+    client_email: user.email,
   };
 
-  // Generate client_id if not provided
-  const clientId = body.client_id || `vibe-${crypto.randomUUID().slice(0, 8)}`;
+  // Use authenticated user's email as client_id
+  const clientId = getClientId(user);
 
   // Generate job ID
   const jobId = crypto.randomUUID();
@@ -374,7 +392,8 @@ async function handleVibeSearch(
 async function handleStatus(
   request: Request,
   env: Env,
-  url: URL
+  url: URL,
+  user: AuthenticatedUser
 ): Promise<Response> {
   const jobId = url.searchParams.get("job_id");
   if (!jobId) {
@@ -423,7 +442,8 @@ async function handleStatus(
 async function handleResults(
   request: Request,
   env: Env,
-  url: URL
+  url: URL,
+  user: AuthenticatedUser
 ): Promise<Response> {
   const jobId = url.searchParams.get("job_id");
   if (!jobId) {
@@ -446,7 +466,8 @@ async function handleResults(
 async function handleFollowup(
   request: Request,
   env: Env,
-  url: URL
+  url: URL,
+  user: AuthenticatedUser
 ): Promise<Response> {
   const jobId = url.searchParams.get("job_id");
   if (!jobId) {
@@ -469,7 +490,8 @@ async function handleFollowup(
 async function handleCancel(
   request: Request,
   env: Env,
-  url: URL
+  url: URL,
+  user: AuthenticatedUser
 ): Promise<Response> {
   if (request.method !== "POST") {
     return new Response(
@@ -500,7 +522,8 @@ async function handleCancel(
 async function handleResume(
   request: Request,
   env: Env,
-  url: URL
+  url: URL,
+  user: AuthenticatedUser
 ): Promise<Response> {
   if (request.method !== "POST") {
     return new Response(
@@ -538,7 +561,8 @@ async function handleResume(
 async function handleStream(
   request: Request,
   env: Env,
-  url: URL
+  url: URL,
+  user: AuthenticatedUser
 ): Promise<Response> {
   const jobId = url.searchParams.get("job_id");
   if (!jobId) {
@@ -571,7 +595,8 @@ async function handleStream(
 async function handleJobsList(
   request: Request,
   env: Env,
-  url: URL
+  url: URL,
+  user: AuthenticatedUser
 ): Promise<Response> {
   const limit = parseInt(url.searchParams.get("limit") ?? "20", 10);
   const offset = parseInt(url.searchParams.get("offset") ?? "0", 10);
@@ -598,7 +623,8 @@ async function handleJobsList(
 async function handleRecentJobs(
   request: Request,
   env: Env,
-  url: URL
+  url: URL,
+  user: AuthenticatedUser
 ): Promise<Response> {
   const limit = parseInt(url.searchParams.get("limit") ?? "10", 10);
 
@@ -626,7 +652,8 @@ async function handleRecentJobs(
 async function handleJobsRefresh(
   request: Request,
   env: Env,
-  url: URL
+  url: URL,
+  user: AuthenticatedUser
 ): Promise<Response> {
   try {
     // Get job IDs to refresh - either from query param or fetch non-terminal jobs
@@ -718,7 +745,8 @@ async function handleJobsRefresh(
 async function handleJobs(
   request: Request,
   env: Env,
-  url: URL
+  url: URL,
+  user: AuthenticatedUser
 ): Promise<Response> {
   if (request.method !== "POST") {
     return new Response(
@@ -785,7 +813,8 @@ async function handleJobs(
 async function handleBackfill(
   request: Request,
   env: Env,
-  url: URL
+  url: URL,
+  user: AuthenticatedUser
 ): Promise<Response> {
   if (request.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), {

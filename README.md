@@ -43,27 +43,34 @@ forage search "Sunrise Bakery" --batches 2 --vibe creative
 
 ### API Usage
 
+**Authentication Required:** All API endpoints require Better Auth session authentication. You must be signed in at [auth-api.grove.place](https://auth-api.grove.place) to use the API.
+
 ```bash
-# Start a search
+# Start a search (with authenticated session cookies)
 curl -X POST https://forage.grove.place/api/search \
   -H "Content-Type: application/json" \
+  --cookie "better-auth.session_token=YOUR_SESSION_TOKEN" \
+  --cookie-jar cookies.txt \
   -d '{
-    "client_id": "test-123",
     "quiz_responses": {
       "business_name": "Sunrise Bakery",
       "tld_preferences": ["com", "co", "io"],
       "vibe": "creative"
-    },
-    "driver_provider": "deepseek",
-    "swarm_provider": "deepseek"
+    }
   }'
 
 # Check status
-curl https://forage.grove.place/api/status?job_id=JOB_ID
+curl https://forage.grove.place/api/status?job_id=JOB_ID \
+  --cookie-jar cookies.txt \
+  -b cookies.txt
 
 # Get results
-curl https://forage.grove.place/api/results?job_id=JOB_ID
+curl https://forage.grove.place/api/results?job_id=JOB_ID \
+  --cookie-jar cookies.txt \
+  -b cookies.txt
 ```
+
+**Note:** The `client_id` is automatically set to the authenticated user's email address.
 
 ## API Endpoints
 
